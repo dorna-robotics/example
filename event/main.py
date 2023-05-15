@@ -31,7 +31,7 @@ def main(robot):
 		robot.jmove(rel=1, j0=-10)
 
 if __name__ == '__main__':
-	ip = "192.168.1.8"
+	ip = "localhost"
 	robot = Dorna()
 
 	# connect to the robot
