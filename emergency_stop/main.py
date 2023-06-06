@@ -7,26 +7,49 @@ sudo python3 main.py in0 1
 from dorna2 import Dorna
 import asyncio
 import sys
+import json
 
-# halt the robot and activate the alarm state when "out0" gets to 1
-async def emergency_event(msg, union, dorna_robot, input_key, state):
-	if input_key in msg and msg[input_key] == state:
+class Emergency(object):
+	"""docstring for Emergency"""
+	def __init__(self, key=None, state=None, enable=0):
+		super(Emergency, self).__init__()
+		self.key = key
+		self.state = state
+		self.enable = enable
+		self.check = False
+
+	def update(self, key, state, enable):
+		self.key = key
+		self.state = state
+		self.enable = enable
+		self.check = self.enable == 1 and self.key in ["in"+str(i) for in in range(16)] and self.state in [i for i in range(2)]
+
+
+async def emergency_event(msg, union, dorna_robot, emergency):
+	if emergency.check and emergency.key in msg and msg[key] == emergency.state:
 		# change the robot state to alarm to make sure that the robot ignores all the future commands
 		dorna_robot.set_alarm(1)
 
-def main(robot, input_key, state):
+def main(robot, config_path, emergency):
 
 	# register an stop function
-	robot.add_event(target=emergency_event, kwargs={"dorna_robot": robot, "input_key": input_key, "state":state})
+	robot.add_event(target=emergency_event, kwargs={"dorna_robot": robot, "emergency": emergency})
 
 	# motion loop
 	while True:
-		time.sleep(1)
+		with open(config_path, 'r') as file:
+			# Load the contents of the file
+			data = json.load(file)
+
+
+		# update 
+		emergency.update(data["emergency"]["key"], data["emergency"]["state"], data["emergency"]["enable"])
+
+		time.sleep(5)
 
 if __name__ == '__main__':
 	# Access the variables passed from CMD
-	input_key = sys.argv[1]
-	state = int(sys.argv[2])
+	config_path = sys.argv[1]
 	
 	ip = "localhost"
 	
