@@ -1,6 +1,8 @@
 """
 check specific input to turn on or off
 after that release the alarm
+this is how you call the function
+sudo python3 main.py in0 1
 """
 from dorna2 import Dorna
 import asyncio
