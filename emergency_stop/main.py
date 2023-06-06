@@ -27,8 +27,9 @@ if __name__ == '__main__':
 	# Access the variables passed from CMD
 	input_key = sys.argv[1]
 	state = int(sys.argv[2])
-
+	
 	ip = "localhost"
+	
 	robot = Dorna()
 
 	# connect to the robot
