@@ -20,7 +20,7 @@ homing process for joint i starts
 2,000,0i7: error, clear alarm
 2,000,0i8: error, reset pid 
 """
-def home(robot, index, val, **kwargs):
+def home(robot, index, val, direction, **kwargs):
     # activate the motors
     result = robot.set_motor(1)
     if result != 2:
@@ -36,7 +36,7 @@ def home(robot, index, val, **kwargs):
     id += 1 # 1
     joint = "j"+str(index)
     # move in the given direction with the given speed
-    arg = {"vel": kwargs["vel_forward"], "rel":1, joint: kwargs["forward"] * kwargs["direction"], "id": id}  
+    arg = {"vel": kwargs["vel_forward"], "rel":1, joint: kwargs["forward"] * direction, "id": id}  
     result = robot.jmove(**arg) # move toward the homing direction until the alarm
     if result >= 0:
         # error happened
@@ -61,7 +61,7 @@ def home(robot, index, val, **kwargs):
     
     for i in range(kwargs["trigger_count"]):
         # move backward
-        arg = {"timeout": 0, "vel": kwargs["vel_backward"], "rel":1, joint: kwargs["backward"] * kwargs["direction"]}  
+        arg = {"timeout": 0, "vel": kwargs["vel_backward"], "rel":1, joint: kwargs["backward"] * direction}  
         robot.jmove(**arg) # move toward the homing direction until the alarm
 
         # set the probe
@@ -103,6 +103,7 @@ if __name__ == '__main__':
     parser.add_argument("--Index")
     parser.add_argument("--Host")
     parser.add_argument("--Value")
+    parser.add_argument("--Dir")
     # Read arguments from command line
     args = parser.parse_args()
     
@@ -110,13 +111,14 @@ if __name__ == '__main__':
     index = int(args.Index)        
     host = args.Host
     val = float(args.Value)
+    direction = float(args.Dir)
 
     robot = Dorna()
     robot.connect(host)
 
     robot.log("connected")
     for i in range(1):
-        home(robot, index, val, **config["j"+ str(index)])
+        home(robot, index, val, direction, **config["j"+ str(index)])
         time.sleep(1)
     robot.close()
     
