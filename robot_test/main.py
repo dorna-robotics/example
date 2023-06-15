@@ -13,9 +13,17 @@ def main(robot):
     i = 1
     # tik
     start = time.time()
-    while time.time() < start + seconds and robot.play_script("script.txt") == 2:
+    while time.time() < start + seconds:
         robot.log("### round "+str(i)+" ###")
+        result = robot.play_script("script.txt")
+
+        # unsuccessful round
+        if result != 2:
+            robot.log("Error...")
+            robot.log(robot.union())
+            break
         i += 1
+
 
     robot.log("go to the rest position")
     # go to the home
