@@ -1,6 +1,5 @@
 config = {
     "j5":{
-        "direction": -1,
         "iprobe": "in5",
         "iprobe_val": 1,
         "joint_val": 0,
@@ -13,7 +12,6 @@ config = {
         "stop": 50,
     },
     "j6":{
-        "direction": -1,
         "iprobe": "in6",
         "iprobe_val": 1,
         "joint_val": 0,
@@ -26,7 +24,6 @@ config = {
         "stop": 50,
     },
     "j7":{
-        "direction": -1,
         "iprobe": "in7",
         "iprobe_val": 1,
         "joint_val": 0,
