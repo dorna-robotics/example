@@ -28,7 +28,7 @@ def home(robot, index, val, direction, thr, dur, **kwargs):
     
     # set threshold
     id = 2000000+10*index # 0
-    if robot.set_err_thr(5) != 2 or robot.set_err_dur(5, id=id) != 2:
+    if robot.set_err_thr(10) != 2 or robot.set_err_dur(5, id=id) != 2:
         # error happened
         return home_error_handling(robot, index, thr, dur) 
     
@@ -53,7 +53,6 @@ def home(robot, index, val, direction, thr, dur, **kwargs):
 
     # reset pid
     id += 1 # 3
-    #result = robot.reset_pid(id=id)
     if robot.set_err_thr(thr) !=2 or robot.set_err_dur(dur, id=id) !=2:
         # error happened
         return home_error_handling(robot, index) 
@@ -89,7 +88,6 @@ def home_error_handling(robot, index, thr, dur):
     id = 2000000+10*index+7 # 7
     robot.set_alarm(0, id=id)
     id += 1 # 8
-    #robot.reset_pid(id=id)
     robot.set_err_thr(thr)
     robot.set_err_dur(dur, id=id)
 
@@ -117,12 +115,16 @@ if __name__ == '__main__':
     # original thr, dur
     thr = robot.get_err_thr()
     dur = robot.get_err_dur()
-
+    p, i, d = robot.get_pid(index)
+    robot.log("initial_pid" + str([p, i, d]))
+    robot.set_pid(index, 0, 0, 0)
     robot.log("connected")
-    for i in range(1):
+    for k in range(1):
         home(robot, index, val, direction, thr, dur, **config["j"+ str(index)])
         time.sleep(1)
     
     print("before: ", robot.get_err_thr(), robot.get_err_dur())
+    robot.set_pid(index, p, i, d)
+    robot.log("final_pid" + str(robot.get_pid(index)))
     robot.close()
     
