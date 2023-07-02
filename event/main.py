@@ -1,8 +1,7 @@
 from dorna2 import Dorna
-import asyncio
 
 # halt the robot and activate the alarm state when "out0" gets to 1
-async def stop_event(msg, union, dorna_robot):
+def stop_event(msg, union, dorna_robot):
 	if "out0" in msg and msg["out0"] == 1:
 		# instant stop
 		dorna_robot.halt()
@@ -23,11 +22,12 @@ def main(robot):
 
 	# motion loop
 	while not robot.prm_stop:
-		print("motion forward")
+		robot.log("motion forward")
 		robot.jmove(rel=1, j0=10)
 
-		print("motion reverse")
+		robot.log("motion reverse")
 		robot.jmove(rel=1, j0=-10)
+
 
 if __name__ == '__main__':
 	ip = "localhost"
