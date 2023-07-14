@@ -1,5 +1,5 @@
 """
-sudo python3 home.py -i 5 -p 10.0.0.4
+sudo python3 main.py --Index 5 --Host 192.168.254.189 --Val 0 --Dir -1
 """
 from dorna2 import Dorna
 import json
@@ -20,76 +20,112 @@ homing process for joint i starts
 2,000,0i7: error, clear alarm
 2,000,0i8: error, reset pid 
 """
-def home(robot, index, val, direction, thr, dur, **kwargs):
-    # activate the motors
-    if robot.set_motor(1) != 2:
-        # error happened
-        return home_error_handling(robot, index, thr, dur)     
+class Home(object):
+    """docstring for Home"""
+    def __init__(self, robot=None, index=5, val=0, direction=1, config=config):
+        super(Home, self).__init__()
+        self.robot = robot
+        self.index = index
+        self.val = val
+        self.direction = direction
+        self.config = config
     
-    # set threshold
-    id = 2000000+10*index # 0
-    if robot.set_err_thr(10) != 2 or robot.set_err_dur(5, id=id) != 2:
-        # error happened
-        return home_error_handling(robot, index, thr, dur) 
-    
-    print("after: ",robot.get_err_thr(), robot.get_err_dur())
-    # motion
-    id += 1 # 1
-    joint = "j"+str(index)
-    # move in the given direction with the given speed
-    arg = {"vel": kwargs["vel_forward"], "rel":1, joint: kwargs["forward"] * direction, "id": id}  
-    if robot.jmove(**arg) >= 0:
-        # error happened
-        return home_error_handling(robot, index, thr, dur) 
+    def begin(self):
+        # disable alarm
+        self.robot.set_alarm(0)
 
-    # sleep at alarm
-    time.sleep(0.2)
+        # get initial pid
+        self.pid_init = self.robot.get_pid(index) + [self.robot.get_err_thr(self.index), self.robot.get_err_dur(self.index)]
+        self.robot.log("pid_init: "+ str(self.pid_init))
 
-    # clear the alarm
-    id += 1 # 2
-    if robot.set_alarm(0, id=id) != 2:
-        # error happened
-        return home_error_handling(robot, index, thr, dur)
-
-    # reset pid
-    id += 1 # 3
-    if robot.set_err_thr(thr) !=2 or robot.set_err_dur(dur, id=id) !=2:
-        # error happened
-        return home_error_handling(robot, index) 
-    
-    for i in range(kwargs["trigger_count"]):
-        # move backward
-        arg = {"timeout": 0, "vel": kwargs["vel_backward"], "rel":1, joint: kwargs["backward"] * direction}  
-        robot.jmove(**arg) # move toward the homing direction until the alarm
-
-        # set the probe
-        id += 1 # 4
-        iprobe = robot.iprobe(index, kwargs["iprobe_val"], id=id) # wait for the input trigger
-        
-        # halt
-        id += 1 # 5
-        if robot.halt(kwargs["halt_accel"], id=id) != 2:
+        # activate motor, pid
+        id = 2000000+10*self.index # 0
+        if any([
+            self.robot.set_motor(1) != 2, 
+            self.robot.set_pid(self.index, self.config["pid"][0], self.config["pid"][1], self.config["pid"][2]) != 2 , 
+            self.robot.set_err_thr(self.index, self.config["pid"][3]) != 2,
+            self.robot.set_err_dur(self.index, self.config["pid"][4], id=id) != 2
+            ]):
             # error happened
-            return home_error_handling(robot, index, thr, dur)
+            return 0
+        pid_new = self.robot.get_pid(index) + [self.robot.get_err_thr(self.index), self.robot.get_err_dur(self.index)]
+        self.robot.log("pid_new: "+ str(pid_new))
+        return 1
+
+
+    def start(self):
+        # begin
+        if not self.begin():
+            return 0
+
+        # motion
+        id = 2000000+10*self.index+1
+
+        # assign joint
+        joint = "j"+str(int(self.index))
+        # move in the given direction with the given speed
+        arg = {"vel": self.config["vel_forward"], "rel":1, joint: self.config["forward"] * self.direction, "id": id}  
+        if self.robot.jmove(**arg) >= 0:
+            # error happened
+            return 0             
+
+        # alarm happened
+        # sleep at alarm
+        time.sleep(0.2)
+
+        # clear the alarm
+        id += 1 # 2
+        if self.robot.set_alarm(0, id=id) != 2:
+            # error happened
+            return 0
+
+        # reset thr and dur
+        id += 1 # 3
+        if any([
+            self.robot.set_err_thr(self.index, self.pid_init[3]) !=2,
+            self.robot.set_err_dur(self.index, self.pid_init[4], id=id) !=2
+            ]):
+            # error happened
+            return 0
         
-    time.sleep(1)
+        for i in range(self.config["trigger_count"]):
+            # move backward
+            arg = {"timeout": 0, "vel": self.config["vel_backward"], "rel":1, joint: self.config["backward"] * self.direction}  
+            self.robot.jmove(**arg) # move toward the homing direction until the alarm
 
-    # set joint
-    joint_assignment = val + robot.val(joint) - iprobe[index]
-    id += 1 # 6
-    if robot.set_joint(index, joint_assignment, id=id) != 2:
-        # error happened
-        return home_error_handling(robot, index, thr, dur)
+            # set the probe
+            id += 1 # 4
+            iprobe = self.robot.iprobe(self.index, self.config["iprobe_val"], id=id) # wait for the input trigger
+            
+            # halt
+            id += 1 # 5
+            if self.robot.halt(self.config["halt_accel"], id=id) != 2:
+                # error happened
+                return 0
+            
+        time.sleep(1)
 
-    return True
+        # set joint
+        joint_assignment = self.val + self.robot.val(joint) - iprobe[self.index]
+        id += 1 # 6
+        if self.robot.set_joint(self.index, joint_assignment, id=id) != 2:
+            # error happened
+            return 0
+        return 1
 
+    def end(self):
+        # disable alarm
+        id = 2000000+10*self.index+7 # 7
+        self.robot.set_alarm(0, id=id)
+        
+        # set to initial pid
+        id += 1 # 8
+        self.robot.set_pid(self.index, self.pid_init[0], self.pid_init[1], self.pid_init[2]) 
+        self.robot.set_err_thr(self.index, self.pid_init[3])
+        self.robot.set_err_dur(self.index, self.pid_init[4], id=id)
 
-def home_error_handling(robot, index, thr, dur):
-    id = 2000000+10*index+7 # 7
-    robot.set_alarm(0, id=id)
-    id += 1 # 8
-    robot.set_err_thr(thr)
-    robot.set_err_dur(dur, id=id)
+        pid_end = self.robot.get_pid(index) + [self.robot.get_err_thr(self.index), self.robot.get_err_dur(self.index)]
+        self.robot.log("pid_end: "+ str(pid_end))
 
 if __name__ == '__main__':
     # Initialize parser
@@ -110,21 +146,16 @@ if __name__ == '__main__':
     direction = float(args.Dir)
 
     robot = Dorna()
-    robot.connect(host)
-
-    # original thr, dur
-    thr = robot.get_err_thr()
-    dur = robot.get_err_dur()
-    p, i, d = robot.get_pid(index)
-    robot.log("initial_pid" + str([p, i, d]))
-    robot.set_pid(index, 0, 0, 0)
-    robot.log("connected")
-    for k in range(1):
-        home(robot, index, val, direction, thr, dur, **config["j"+ str(index)])
-        time.sleep(1)
+    if robot.connect(host):
+        # connected
+        robot.log("connected")
+        
+        for k in range(1):
+            home = Home(robot, index, val, direction, config["j"+ str(index)])
+            home.start()
+            home.end()
     
-    print("before: ", robot.get_err_thr(), robot.get_err_dur())
-    robot.set_pid(index, p, i, d)
-    robot.log("final_pid" + str(robot.get_pid(index)))
+    robot.jmove(j5=20, rel=0)
+    # close
     robot.close()
     

@@ -10,6 +10,7 @@ config = {
         "halt_accel": 1,
         "trigger_count": 1,
         "stop": 50,
+        "pid": [0, 0, 0, 10, 20],
     },
     "j6":{
         "iprobe": "in6",
@@ -22,6 +23,7 @@ config = {
         "halt_accel": 1,
         "trigger_count": 1,
         "stop": 50,
+        "pid": [0, 0, 0, 10, 20],      
     },
     "j7":{
         "iprobe": "in7",
@@ -34,5 +36,6 @@ config = {
         "halt_accel": 1,
         "trigger_count": 1,
         "stop": 50,
+        "pid": [0, 0, 0, 10, 20],      
     },                          
 }
