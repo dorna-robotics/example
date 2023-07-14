@@ -113,9 +113,13 @@ class Home(object):
             return 0
         return 1
 
-    def end(self):
+    def end(self, success):
+        if not success:
+            id = 2000000+10*self.index+7 # 7
+        else:
+             id = 12 # 12   
+        
         # disable alarm
-        id = 2000000+10*self.index+7 # 7
         self.robot.set_alarm(0, id=id)
         
         # set to initial pid
@@ -126,6 +130,7 @@ class Home(object):
 
         pid_end = self.robot.get_pid(index) + [self.robot.get_err_thr(self.index), self.robot.get_err_dur(self.index)]
         self.robot.log("pid_end: "+ str(pid_end))
+
 
 if __name__ == '__main__':
     # Initialize parser
@@ -152,8 +157,8 @@ if __name__ == '__main__':
         
         for k in range(1):
             home = Home(robot, index, val, direction, config["j"+ str(index)])
-            home.start()
-            home.end()
+            rtn = home.start()
+            home.end(rtn)
     
     # close
     robot.close()
