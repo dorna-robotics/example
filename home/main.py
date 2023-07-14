@@ -155,7 +155,6 @@ if __name__ == '__main__':
             home.start()
             home.end()
     
-    robot.jmove(j5=20, rel=0)
     # close
     robot.close()
     
