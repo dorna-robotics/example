@@ -35,20 +35,18 @@ class Home(object):
         self.robot.set_alarm(0)
 
         # get initial pid
-        self.pid_init = self.robot.get_pid(index) + [self.robot.get_err_thr(self.index), self.robot.get_err_dur(self.index)]
+        self.pid_init = self.robot.get_pid(index)
         self.robot.log("pid_init: "+ str(self.pid_init))
 
         # activate motor, pid
         id = 2000000+10*self.index # 0
         if any([
             self.robot.set_motor(1) != 2, 
-            self.robot.set_pid(self.index, self.config["pid"][0], self.config["pid"][1], self.config["pid"][2]) != 2 , 
-            self.robot.set_err_thr(self.index, self.config["pid"][3]) != 2,
-            self.robot.set_err_dur(self.index, self.config["pid"][4], id=id) != 2
+            self.robot.set_pid(self.index, self.config["pid"][0], self.config["pid"][1], self.config["pid"][2], self.config["pid"][3], self.config["pid"][4], id=id ) != 2 ,
             ]):
             # error happened
             return 0
-        pid_new = self.robot.get_pid(index) + [self.robot.get_err_thr(self.index), self.robot.get_err_dur(self.index)]
+        pid_new = self.robot.get_pid(index)
         self.robot.log("pid_new: "+ str(pid_new))
         return 1
 
@@ -81,10 +79,7 @@ class Home(object):
 
         # reset thr and dur
         id += 1 # 3
-        if any([
-            self.robot.set_err_thr(self.index, self.pid_init[3]) !=2,
-            self.robot.set_err_dur(self.index, self.pid_init[4], id=id) !=2
-            ]):
+        if self.robot.set_pid(self.index, p=None, i=None, d=None, thr=self.pid_init[3], dur=self.pid_init[4], id=id) != 2:
             # error happened
             return 0
         
@@ -124,11 +119,9 @@ class Home(object):
         
         # set to initial pid
         id += 1 # 8
-        self.robot.set_pid(self.index, self.pid_init[0], self.pid_init[1], self.pid_init[2]) 
-        self.robot.set_err_thr(self.index, self.pid_init[3])
-        self.robot.set_err_dur(self.index, self.pid_init[4], id=id)
+        self.robot.set_pid(self.index, self.pid_init[0], self.pid_init[1], self.pid_init[2], self.pid_init[3], self.pid_init[4], id=id) 
 
-        pid_end = self.robot.get_pid(index) + [self.robot.get_err_thr(self.index), self.robot.get_err_dur(self.index)]
+        pid_end = self.robot.get_pid(index)
         self.robot.log("pid_end: "+ str(pid_end))
 
 
