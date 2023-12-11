@@ -79,7 +79,7 @@ class Home(object):
 
         # reset thr and dur
         id += 1 # 3
-        if self.robot.set_pid(self.index, p=None, i=None, d=None, thr=self.pid_init[3], dur=self.pid_init[4], id=id) != 2:
+        if self.robot.set_pid(self.index, p=None, i=None, d=None, threshold=self.pid_init[3], durration=self.pid_init[4], id=id) != 2:
             # error happened
             return 0
         
@@ -106,6 +106,9 @@ class Home(object):
         if self.robot.set_joint(self.index, joint_assignment, id=id) != 2:
             # error happened
             return 0
+
+        # joint move
+
         return 1
 
     def end(self, success):
