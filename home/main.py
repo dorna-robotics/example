@@ -35,7 +35,7 @@ class Home(object):
         self.robot.set_alarm(0)
 
         # get initial pid
-        self.pid_init = self.robot.get_pid(index)
+        self.pid_init = self.robot.get_pid(self.index)
         self.robot.log("pid_init: "+ str(self.pid_init))
 
         # activate motor, pid
@@ -46,7 +46,7 @@ class Home(object):
             ]):
             # error happened
             return 0
-        pid_new = self.robot.get_pid(index)
+        pid_new = self.robot.get_pid(self.index)
         self.robot.log("pid_new: "+ str(pid_new))
         return 1
 
