@@ -124,7 +124,7 @@ class Home(object):
         id += 1 # 8
         self.robot.set_pid(self.index, self.pid_init[0], self.pid_init[1], self.pid_init[2], self.pid_init[3], self.pid_init[4], id=id) 
 
-        pid_end = self.robot.get_pid(index)
+        pid_end = self.robot.get_pid(self.index)
         self.robot.log("pid_end: "+ str(pid_end))
 
 
